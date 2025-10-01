@@ -89,7 +89,10 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
+    'UNAUTHENTICATED_USER': None,  # Don't use Django auth user
+    'UNAUTHENTICATED_TOKEN': None,  # Don't use tokens
 }
+
 
 # CORS
 CORS_ALLOW_ALL_ORIGINS = env('CORS_ALLOW_ALL', default=True)
