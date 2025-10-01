@@ -104,17 +104,22 @@ CORS_ALLOWED_ORIGINS = env('CORS_ALLOWED_ORIGINS', default='').split(',') if env
 EMAIL_PROVIDER = env('EMAIL_PROVIDER', default='smtp').lower()
 
 # Common Email Settings
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@example.com')
-DEFAULT_FROM_NAME = env('DEFAULT_FROM_NAME', default='My Platform')
+DEFAULT_FROM_EMAIL = env('SMTP_FROM_EMAIL', default='no-reply@edcluster.com')
+DEFAULT_FROM_NAME = env('SMTP_FROM_NAME', default='My Platform')
 
 # SMTP Configuration
 if EMAIL_PROVIDER == 'smtp':
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
-    EMAIL_PORT = env('EMAIL_PORT', default=587)
-    EMAIL_USE_TLS = env('EMAIL_USE_TLS', default=True)
-    EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
-    EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+    EMAIL_HOST = env('SMTP_HOST', default='smtp.gmail.com')
+    EMAIL_PORT = int(env('SMTP_PORT', default=587))
+    
+    # Fix: env() returns strings, need to compare correctly
+    port = env('SMTP_PORT', default='587')
+    EMAIL_USE_SSL = port == '465'
+    EMAIL_USE_TLS = port == '587'
+    
+    EMAIL_HOST_USER = env('SMTP_USERNAME', default='')
+    EMAIL_HOST_PASSWORD = env('SMTP_PASSWORD', default='')
 
 # SendGrid Configuration
 elif EMAIL_PROVIDER == 'sendgrid':
