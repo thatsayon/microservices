@@ -1,6 +1,7 @@
 from rest_framework import generics
 from .models import Notification
 from .serializers import NotificationSerializer
+from .tasks import send_notification_task
 from .sio import sio
 import asyncio
 
@@ -15,10 +16,6 @@ class NotificationListCreateView(generics.ListCreateAPIView):
         return Notification.objects.filter(user_id=user_id)
 
     def perform_create(self, serializer):
-        notification = serializer.save()
+        notification = serializer.save(user_id=self.request.user.id)
         data = NotificationSerializer(notification).data
-        # Emit async event to user’s Socket.IO room
-        asyncio.get_event_loop().create_task(
-            sio.emit("new_notification", data, room=f"user_{notification.user_id}")
-        )
-
+        send_notification_task.delay(data, str(notification.user_id))
