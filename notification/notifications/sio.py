@@ -1,8 +1,10 @@
 import socketio
 
+# Use Redis as message queue for cross-process communication
 sio = socketio.AsyncServer(
     async_mode="asgi",
-    cors_allowed_origins="*"
+    cors_allowed_origins="*",
+    client_manager=socketio.AsyncRedisManager('redis://localhost:6379/0')  # 👈 Add this
 )
 
 @sio.event
@@ -11,29 +13,43 @@ async def connect(sid, environ, auth):
     if user_id:
         await sio.save_session(sid, {"user_id": user_id})
         await sio.enter_room(sid, f"user_{user_id}")
-        print(f"✅ User {user_id} connected via Socket.IO")
+        print(f"✅ User {user_id} connected via Socket.IO (sid: {sid})")
     else:
-        return False  # Reject if no user_id
+        print("❌ Connection rejected: No user_id provided")
+        return False
 
 @sio.event
 async def disconnect(sid):
     session = await sio.get_session(sid)
     user_id = session.get("user_id")
-    print(f"❌ User {user_id} disconnected")
+    if user_id:
+        print(f"❌ User {user_id} disconnected (sid: {sid})")
 
 @sio.event
 async def mark_read(sid, data):
-    from .models import Notification  # 👈 Import inside the function
+    from .models import Notification
+    from django.core.exceptions import ValidationError
+    
     notif_id = data.get("id")
+    if not notif_id:
+        return {"error": "Missing notification id"}
+    
     try:
-        notif = Notification.objects.get(id=notif_id)
+        session = await sio.get_session(sid)
+        user_id = session.get("user_id")
+        
+        notif = await Notification.objects.aget(id=notif_id, user_id=user_id)  # 👈 Verify ownership
         notif.is_read = True
-        notif.save()
+        await notif.asave()
+        
         await sio.emit(
             "notification_read",
-            {"id": notif_id},
-            room=f"user_{notif.user_id}"
+            {"id": str(notif_id)},
+            room=f"user_{user_id}"
         )
+        return {"success": True}
     except Notification.DoesNotExist:
-        pass
-
+        return {"error": "Notification not found"}
+    except Exception as e:
+        print(f"Error marking notification as read: {e}")
+        return {"error": "Internal error"}
