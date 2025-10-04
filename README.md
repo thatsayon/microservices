@@ -1,3 +1,4 @@
+
 # Microservices Project
 
 This repository contains multiple Django microservices: **authentication** and **payment**. Each microservice is self-contained with its own Django project setup.
@@ -53,22 +54,21 @@ To keep the code clean and consistent, the following conventions are followed ac
 ### 3. Imports
 Standard library imports first, followed by third-party, then local imports.
 
-```python
+\`\`\`python
 import os
 from datetime import datetime
 
 from django.conf import settings
 
 from myapp.models import User
-```
+\`\`\`
 
 ### 4. Docstrings
 Functions, classes, and modules include clear docstrings.
 
-```python
+\`\`\`python
 class User(models.Model):
-    """
-    Represents a user in the authentication service.
+    """Represents a user in the authentication service.
 
     Fields:
     - email: user's email
@@ -77,7 +77,7 @@ class User(models.Model):
     """
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=100)
-```
+\`\`\`
 
 ### 5. Settings Separation
 - Keep secret keys and sensitive configs in environment variables
@@ -90,33 +90,53 @@ class User(models.Model):
 
 ---
 
+## Example Port Plan
+
+When running multiple microservices together, each service should have its own dedicated port to avoid conflicts.
+
+| Microservice     | Container Port | Host Port |
+|-------------------|----------------|-----------|
+| Authentication    | 8000           | 8001      |
+| Payment           | 8000           | 8002      |
+| Email (future)   | 8000           | 8003      |
+| Notification (future) | 8000      | 8004      |
+| Socket.IO Service (future) | 9000 | 9000      |
+| Celery Worker    | —              | —         |
+| Celery Beat      | —              | —         |
+| PostgreSQL       | 5432           | 5432      |
+| Redis             | 6379           | 6379      |
+
+This ensures no port conflicts and keeps services isolated.
+
+---
+
 ## Setup Instructions
 
 ### 1. Clone the repository
 
-```bash
+\`\`\`bash
 git clone https://github.com/thatsayon/microservices.git
 cd microservices
-```
+\`\`\`
 
 ### 2. Navigate to a microservice folder and install dependencies
 
-```bash
+\`\`\`bash
 cd authentication  # or payment
 pip install -r requirements.txt
-```
+\`\`\`
 
 ### 3. Apply migrations
 
-```bash
+\`\`\`bash
 python manage.py migrate
-```
+\`\`\`
 
 ### 4. Run the development server
 
-```bash
+\`\`\`bash
 python manage.py runserver
-```
+\`\`\`
 
 ---
 
@@ -125,20 +145,20 @@ python manage.py runserver
 When running multiple microservices locally, each service needs to run on a different port.
 
 ### Terminal 1 - Authentication Service
-```bash
+\`\`\`bash
 cd authentication
-python manage.py runserver 8000
-```
+python manage.py runserver 8001
+\`\`\`
 
 ### Terminal 2 - Payment Service
-```bash
+\`\`\`bash
 cd payment
-python manage.py runserver 8001
-```
+python manage.py runserver 8002
+\`\`\`
 
 The services will be available at:
-- Authentication: `http://localhost:8000`
-- Payment: `http://localhost:8001`
+- Authentication: \`http://localhost:8001\`
+- Payment: \`http://localhost:8002\`
 
 ---
 
@@ -146,7 +166,7 @@ The services will be available at:
 
 - Follow the coding conventions above
 - Use feature branches for new functionality
-- Write docstrings and maintain `README.md` updates
+- Write docstrings and maintain \`README.md\` updates
 - Test your changes before creating a pull request
 
 ---
@@ -154,3 +174,4 @@ The services will be available at:
 ## License
 
 This project is licensed under the MIT License.
+
