@@ -4,8 +4,9 @@ import socketio
 sio = socketio.AsyncServer(
     async_mode="asgi",
     cors_allowed_origins="*",
-    client_manager=socketio.AsyncRedisManager('redis://localhost:6379/0')  # 👈 Add this
+    client_manager=socketio.AsyncRedisManager("redis://redis:6379/0")
 )
+
 
 @sio.event
 async def connect(sid, environ, auth):
@@ -18,6 +19,7 @@ async def connect(sid, environ, auth):
         print("❌ Connection rejected: No user_id provided")
         return False
 
+
 @sio.event
 async def disconnect(sid):
     session = await sio.get_session(sid)
@@ -25,23 +27,25 @@ async def disconnect(sid):
     if user_id:
         print(f"❌ User {user_id} disconnected (sid: {sid})")
 
+
 @sio.event
 async def mark_read(sid, data):
     from .models import Notification
     from django.core.exceptions import ValidationError
-    
+
     notif_id = data.get("id")
     if not notif_id:
         return {"error": "Missing notification id"}
-    
+
     try:
         session = await sio.get_session(sid)
         user_id = session.get("user_id")
-        
-        notif = await Notification.objects.aget(id=notif_id, user_id=user_id)  # 👈 Verify ownership
+
+        # 👈 Verify ownership
+        notif = await Notification.objects.aget(id=notif_id, user_id=user_id)
         notif.is_read = True
         await notif.asave()
-        
+
         await sio.emit(
             "notification_read",
             {"id": str(notif_id)},

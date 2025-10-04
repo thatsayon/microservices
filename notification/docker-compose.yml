@@ -5,15 +5,15 @@ services:
     image: postgres:15
     restart: always
     environment:
-      POSTGRES_DB: notifications_db
-      POSTGRES_USER: notifications_user
-      POSTGRES_PASSWORD: notifications_pass
+      POSTGRES_DB: notification
+      POSTGRES_USER: ayon
+      POSTGRES_PASSWORD: pingayon
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U notifications_user -d notifications_db"]
+      test: ["CMD-SHELL", "pg_isready -U ayon -d notification"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -44,8 +44,26 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgresql://notifications_user:notifications_pass@db:5432/notifications_db
+      - DATABASE_URL=postgresql://ayon:pingayon@db:5432/notification
+      - REDIS_URL=redis://redis:6379/0
+
+  celery:
+    build: .
+    container_name: celery_worker
+    command: celery -A core worker --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://ayon:pingayon@db:5432/notification
       - REDIS_URL=redis://redis:6379/0
 
 volumes:
   postgres_data:
+
